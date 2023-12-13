@@ -124,7 +124,7 @@ def hsic_condind(A,B,S,data,reps):
     #     pval=hsic_CI(X,Y,Z,reps=reps)
     return pval
 
-def tsci_unrolled(X,tau, alpha= 0.05,cond_dep ='cond_dep_pcorr'):
+def cits_unrolled(X,tau, alpha= 0.05,cond_dep ='cond_dep_pcorr'):
     """
     :X: pxn array with p variables and n time points
     :tau: maximum time delay of interaction, i.e. $X_t$ can depend up to $X_{t-\tau}$ and not earlier.
@@ -163,7 +163,7 @@ def tsci_unrolled(X,tau, alpha= 0.05,cond_dep ='cond_dep_pcorr'):
 
     return A
 
-def tsci_rolled(A,p,tau):
+def cits_rolled(A,p,tau):
     """
     :p: # of variables
     :A: Unrolled adjacency matrix
@@ -177,7 +177,7 @@ def tsci_rolled(A,p,tau):
                     B[v1,v2]=A[t1*p+v1,t*p+v2]###earlier it was 1 here, this should be same
     return B
 
-def tsci_weighted_rolled(A,p,tau):
+def cits_weighted_rolled(A,p,tau):
     """
     :p: # of variables
     :A: Unrolled adjacency matrix
@@ -196,10 +196,10 @@ def tsci_weighted_rolled(A,p,tau):
                 B[v1,v2] = B[v1,v2]/s
     return B
 
-def tsci_full(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr'):
+def cits_full(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr'):
     p = X.shape[0]
-    A = tsci_unrolled(X,tau,alpha, cond_dep)
-    B = tsci_rolled(A,p,tau)
+    A = cits_unrolled(X,tau,alpha, cond_dep)
+    B = cits_rolled(A,p,tau)
     return B
 def causaleff_ida(g,data):
     #from sklearn import linear_model
@@ -279,12 +279,12 @@ def data_transformed(data, lag):
             data2[:,lag1*i+j]=data[j::(2*lag1),i]
     return data2
 
-def tsci_full_weighted(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr', thresh = 10):
+def cits_full_weighted(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr', thresh = 10):
     import networkx as nx
     p = X.shape[0]
-    A = tsci_unrolled(X,tau,alpha, cond_dep)
+    A = cits_unrolled(X,tau,alpha, cond_dep)
     # g = nx.from_numpy_array(A, create_using= nx.DiGraph())
-    B = tsci_rolled(A,p,tau)
+    B = cits_rolled(A,p,tau)
 
     U = np.zeros((p*(tau+1),p*(tau+1)))
     t = 2*tau+1
@@ -300,12 +300,12 @@ def tsci_full_weighted(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr', thresh = 
     g = nx.from_numpy_array(U, create_using= nx.DiGraph())
     data_trans = data_transformed(X.T, tau)
     causaleff_A = causaleff_lscm(g,data_trans)#causaleff_ida(g,data_trans)
-    causaleff_B = tsci_weighted_rolled(causaleff_A,p,tau)
+    causaleff_B = cits_weighted_rolled(causaleff_A,p,tau)
     causaleff_B[np.abs(causaleff_B)<np.max(causaleff_B)/thresh] = 0
     B_out = (causaleff_B!=0).astype(int)
     return B_out, causaleff_B
 
-def tsci_unrolled_in(X,tau,alpha, cond_dep = 'cond_dep_pcorr'):
+def cits_unrolled_in(X,tau,alpha, cond_dep = 'cond_dep_pcorr'):
     """
     :X: pxn array with p variables and n time points
     :tau: maximum time delay of interaction, i.e. $X_t$ can depend up to $X_{t-\tau}$ and not earlier.
@@ -368,7 +368,7 @@ def unrolled_in_orient(A,S,tau,p):
                                     A[t*p+v,t*p+v1] = 0
     return A
 
-def tsci_rolled_in(A1,p,tau):
+def cits_rolled_in(A1,p,tau):
     """
     :p: # of variables
     :A: Unrolled adjacency matrix
@@ -382,8 +382,8 @@ def tsci_rolled_in(A1,p,tau):
                     B[v1,v2]=1
     return B
 
-def tsci_full_in(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr'):
+def cits_full_in(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr'):
     p = X.shape[0]
-    A = tsci_unrolled_in(X,tau,alpha, cond_dep)
-    B = tsci_rolled_in(A,p,tau)
+    A = cits_unrolled_in(X,tau,alpha, cond_dep)
+    B = cits_rolled_in(A,p,tau)
     return B
