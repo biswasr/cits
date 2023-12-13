@@ -14,11 +14,13 @@ You can get the latest version of CITS package as follows
 - R >= 4.0
 - R package `kpcalg` and its dependencies. They can be installed in R or RStudio as follows:
 
+```
 > install.packages("BiocManager")
 > BiocManager::install("graph")
 > BiocManager::install("RBGL")
 > install.packages("pcalg")
 > install.packages("kpcalg")
+```
 
 ## Contributing
 
