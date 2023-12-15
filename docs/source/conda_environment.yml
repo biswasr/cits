@@ -1,0 +1,18 @@
+name: cits-environment
+channels:
+  - conda-forge
+  - defaults
+  - r
+
+dependencies:
+  - python=3.7
+  - sphinx_rtd_theme
+  - sphinxcontrib-bibtex
+  - numpy
+  - pandas
+  - scipy
+  - networkx
+  - r
+  - rpy2
+  - pip:
+    - sphinx
