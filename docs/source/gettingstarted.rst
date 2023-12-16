@@ -25,9 +25,7 @@ Load other packages
 Simulate a dataset
 ~~~~~~~~~~~~~~~~~~
 
-Use the simulate_timeseries function to simulate a time series dataset. It also outputs the adjacency matrix (unweighted and weighted) of the rolled causal graph corresponding to the simulated time series. 
-
-Note that the function inputs the ground truth adjacency matrix desired for the simulated time series, the model type and noise std deviation.
+Use the simulate_timeseries function to simulate a time series dataset. It also outputs the ground truth adjacency matrix of the simulated time series.
 
 Choices of model type are: 
 
