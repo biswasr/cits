@@ -3,7 +3,7 @@ import numpy as np
 from numpy.random import default_rng
 rng = default_rng(seed=111)
 
-def simulate_timeseries(model, noise, T):
+def simulate(model, noise, T):
     """Simulate time series from different models and ground truth adjacencies for time series causal graph.
     
     :param model: Model for simulation. It take one of the these values: 'lingauss1' for Linear Gaussian Model 1, 'lingauss2' for Linear Gaussian Model 2, 'nonlinnongauss1' for Non-linear Non-Gaussian Model 1, 'nonlinnongauss2' for Non-linear Non-Gaussian Model 2, 'ctrnn': CTRNN
