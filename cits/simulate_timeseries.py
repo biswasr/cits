@@ -6,21 +6,14 @@ rng = default_rng(seed=111)
 def simulate_timeseries(model, noise, T):
     """Simulate time series from different models and ground truth adjacencies for time series causal graph.
     
-    Args:
-        model: (string)
-            'lingauss1': Linear Gaussian Model 1
-            'lingauss2': Linear Gaussian Model 2
-            'nonlinnongauss1': Non-linear Non-Gaussian Model 1
-            'nonlinnongauss2': Non-linear Non-Gaussian Model 2
-            'ctrnn': CTRNN
-        noise: (float) Noise standard deviation in the simulation
-        T: (int) Number of time points to have in the simulated time series
-
-    Returns:
-        X: (numpy.array) Simulated time series of shape (T,4) with T time-recordings for 4 variables
-        groundtruthadj: (numpy.array) Grouth truth unweighted adjacency matrix: (i,j) entry represents causal influence from i->j. 
-        groundtruthadj_weighted: (numpy.array) Grouth truth weighted adjacency matrix: (i,j) entry has the strength of causal influence from i->j.
-
+    :param model: Model for simulation. It take one of the these values: 'lingauss1' for Linear Gaussian Model 1, 'lingauss2' for Linear Gaussian Model 2, 'nonlinnongauss1' for Non-linear Non-Gaussian Model 1, 'nonlinnongauss2' for Non-linear Non-Gaussian Model 2, 'ctrnn': CTRNN
+    :type model: string
+    :param noise: Noise standard deviation in the simulation
+    :type noise: float
+    :param T: Number of time points to have in the simulated time series
+    :type T: int
+    :returns: a tuple of three numpy.array as follows. first numpy.array : Simulated time series of shape (4,T) with T time-recordings for 4 variables. second numpy.array : Grouth truth unweighted adjacency matrix: (i,j) entry represents causal influence from i->j. third numpy.array : Grouth truth weighted adjacency matrix: (i,j) entry has the strength of causal influence from i->j.
+    :rtype: tuple
     """
 
     smspikes=np.zeros((n_neurons,T))
@@ -101,25 +94,28 @@ def simulate_timeseries(model, noise, T):
     X = smspikes
     return X, groundtruthadj, groundtruthadj_weighted
 
-def simulate_ctrnn(T,w,tau,noise=1):
+def simulate_ctrnn(T,n_vars,w,tau,noise=1):
     """Simulate a continuous time recurrent neural network (CTRNN) time series
     
-    Args:
-        T: (int) Number of time points to have in the simulated time series
-        w: (numpy.array) Weights of the CTRNN
-        tau: (float) Time constant of the CTRNN
-        noise: (float) Noise standard deviation in the simulation
-
-    Returns:
-        u: (numpy.array) Simulated time series of shape (T,4) with T time-recordings for 4 variables
-    
+    :param T: Number of time points to have in the simulated time series
+    :type T: int
+    :param n_vars: Number of variables to have in the simulated time series
+    :type n_vars: int
+    :param w: Weights of the CTRNN
+    :type w: numpy.array
+    :param tau: Time constant of the CTRNN
+    :type tau: float
+    :param noise: Noise standard deviation in the simulation
+    :type noise: float 
+    :returns: Simulated time series of shape (n_vars,T) with T time-recordings for n_vars many variables
+    :rtype: numpy.array
     """  
     import numpy as np
     e=np.exp(1)
-    u=np.zeros((m,n_ctrnn))
+    u=np.zeros((n_vars,T))
 
-    for n in range(n_ctrnn-1):
-        for i in range(m):
+    for n in range(T-1):
+        for i in range(n_vars):
             In=np.random.normal(1,noise)
             u[i,(n+1)] = u[i,n] - ((e*u[i,n])/tau) + e*np.sum(w[:,i]*np.tanh(u[:,n]))/tau + e*In/tau
     return u
