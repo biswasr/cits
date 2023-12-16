@@ -2,13 +2,13 @@ import numpy as np
 from itertools import chain, combinations
 from scipy import stats, linalg
 def data_transform(X,tau):
-    """Transforms data X of shape (p,T) to time-windowed samples $\chi$ of shape $(p*2*(\tau+1),N)$, where $N = \lfloor \frac{T-2*(\tau+1)}{2*(\tau+1)} \rfloor$.
+    """Transforms data X of shape (p,T) to time-windowed samples :math:`\\chi` of shape :math:`(p*2*(\\tau+1),N)`, where :math:`N = \\lfloor \\frac{T-2*(\\tau+1)}{2*(\\tau+1)} \\rfloor`.
 
     :param X: pxT array with p variables and T time points
     :type X: numpy.array
-    :tau: Markovian order, in other words, maximum time delay of interaction, i.e. $X_t$ can depend up to $X_{t-\tau}$ and not earlier.
+    :tau: Markovian order, in other words, maximum time delay of interaction, i.e. :math:`X_t` can depend up to :math:`X_{t-\\tau}` and not earlier.
     :type tau: int
-    :returns: Transformed dataset which is an array of shape $(p*2*(\tau+1),N)$
+    :returns: Transformed dataset which is an array of shape :math:`(p*2*(\\tau+1),N)`
     :rtype: numpy.array 
     """ 
     p = X.shape[0]
@@ -24,13 +24,13 @@ def data_transform(X,tau):
 
 
 def data_transformed(X, tau):
-    """Transforms data X of shape (p,n) to time-windowed samples of shape $(N,p*(\tau+1))$, with an inter-sample time gap of $\tau+1$, where $N = \lfloor \frac{n-2*(\tau+1)}{2*(\tau+1)} \rfloor$.
+    """Transforms data X of shape (p,n) to time-windowed samples of shape :math:`(N,p*(\\tau+1))`, with an inter-sample time gap of :math:`\\tau+1`, where :math:`N = \\lfloor \\frac{n-2*(\\tau+1)}{2*(\\tau+1)} \\rfloor`.
 
     :param X: pxT array with p variables and T time points
     :type X: numpy.array
-    :param tau: Markovian order, in other words, maximum time delay of interaction, i.e. $X_t$ can depend up to $X_{t-\tau}$ and not earlier.
+    :param tau: Markovian order, in other words, maximum time delay of interaction, i.e. :math:`X_t` can depend up to :math:`X_{t-\\tau}` and not earlier.
     :type tau: int
-    :returns: Transformed dataset which is an array of shape $(N,p*(\tau+1))$
+    :returns: Transformed dataset which is an array of shape :math:`(N,p*(\\tau+1))`
     :rtype: numpy.array
     """
     data = X.T
@@ -47,7 +47,7 @@ def data_transformed(X, tau):
     return data2
 
 def powerset(iterable):
-    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+    "powerset([1,2,3]) = :math:`\\{(), (1,), (2,), (3,), (1,2), (1,3), (2,3), (1,2,3)\\}`"
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
@@ -142,7 +142,7 @@ def cits_unrolled(X,tau, alpha= 0.05,cond_dep ='cond_dep_pcorr'):
 
     :param X: pxT array with p variables and T time points
     :type X: numpy.array
-    :param tau: Markovian order, in other words, maximum time delay of interaction, i.e. $X_t$ can depend up to $X_{t-\tau}$ and not earlier.
+    :param tau: Markovian order, in other words, maximum time delay of interaction, i.e. :math:`X_t` can depend up to :math:`X_{t-\\tau}` and not earlier.
     :type tau: int
     :param alpha: Significance level of conditional dependence tests
         (default is 0.05)
@@ -194,7 +194,7 @@ def cits_rolled(A,p,tau):
     :type p: int
     :param A: Adjacency matrix of unrolled graph
     :type A: numpy.array
-    :param tau: Markovian order, in other words, maximum time delay of interaction, i.e. $X_t$ can depend up to $X_{t-\tau}$ and not earlier.
+    :param tau: Markovian order, in other words, maximum time delay of interaction, i.e. :math:`X_t` can depend up to :math:`X_{t-\\tau}` and not earlier.
     :type tau: int
     :returns: Adjacency matrix of rolled graph
     :rtype: numpy.array
@@ -240,7 +240,7 @@ def cits_full(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr'):
     
     :param X: pxT array for time series with p variables and T time points
     :type X: nump.array
-    :param tau: Markovian order, in other words, maximum time delay of interaction, i.e. $X_t$ can depend up to $X_{t-\tau}$ and not earlier.
+    :param tau: Markovian order, in other words, maximum time delay of interaction, i.e. :math:`X_t` can depend up to :math:`X_{t-\\tau}` and not earlier.
     :type tau: int
     :param alpha: Significance level of conditional dependence tests
         (default is 0.05)
@@ -269,7 +269,7 @@ def causaleff_lscm(g,data):
     :type g: networkx.DiGraph 
     :param data: Transformed original time series X by data_transformed function
     :type data: nump.array
-    :returns: Adjacency matrix with (i,j) entry having the weight of causal relationship from the variable with index i -> the variable with index j in the unrolled graph g
+    :returns: Adjacency matrix with (i,j) entry having the weight of causal relationship from the variable with index i :math:`\\rightarrow` the variable with index j in the unrolled graph g
     :rtype: numpy.array
     """
 
@@ -297,7 +297,7 @@ def cits_full_weighted(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr', thresh = 
     
     :param X: pxT array for time series with p variables and T time points
     :type X: nump.array
-    :param tau: Markovian order, in other words, maximum time delay of interaction, i.e. $X_t$ can depend up to $X_{t-\tau}$ and not earlier.
+    :param tau: Markovian order, in other words, maximum time delay of interaction, i.e. :math:`X_t` can depend up to :math:`X_{t-\\tau}` and not earlier.
     :type tau: int
     :param alpha: Significance level of conditional dependence tests
         (default is 0.05)
@@ -310,7 +310,7 @@ def cits_full_weighted(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr', thresh = 
             :'cond_dep_pcorr': partial correlation based test for Gaussian data
             :'cond_dep_hsic': Hilbert-Schmidt criterion based test for Non-Gaussian data
 
-    :returns: Weighted adjacency matrix of rolled graph, whose (i,j) entry represents the weight of causal relationships from variable i -> variable j. A non-zero weight indicates the presence of a causal relationship and zero weight indicates its absence.
+    :returns: Weighted adjacency matrix of rolled graph, whose (i,j) entry represents the weight of causal relationships from variable i :math:`\\rightarrow` variable j. A non-zero weight indicates the presence of a causal relationship and zero weight indicates its absence.
     :rtype: numpy.array
         (shape is (p,p))
     """
