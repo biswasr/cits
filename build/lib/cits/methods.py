@@ -248,11 +248,6 @@ def cits_full(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr'):
     :param cond_dep: Specifies which conditional dependence test to use. It can take value 'cond_dep_pcorr' for Partial correlation based test suitable for Gaussian noise distribution and 'cond_dep_hsic' for test based on Hilbert-Schmidt criterion applicable for either Gaussian or non-Gaussian noise distributions. Partial correlation based test would be more powerful if the noise distribution is known to be Gaussian.
         (default is 'cond_dep_pcorr')
     :type cond_dep: string
-    
-    :cond_dep: choice of conditional dependence test
-            :'cond_dep_pcorr': partial correlation based test for Gaussian data
-            :'cond_dep_hsic': Hilbert-Schmidt criterion based test for Non-Gaussian data
-
     :returns: Unweighted adjacency matrix of rolled graph
     :rtype: numpy.array
         (shape is (p,p)) 
@@ -305,11 +300,6 @@ def cits_full_weighted(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr', thresh = 
     :param cond_dep: Specifies which conditional dependence test to use. It can take value 'cond_dep_pcorr' for Partial correlation based test suitable for Gaussian noise distribution and 'cond_dep_hsic' for test based on Hilbert-Schmidt criterion applicable for either Gaussian or non-Gaussian noise distributions. Partial correlation based test would be more powerful if the noise distribution is known to be Gaussian.
         (default is 'cond_dep_pcorr')
     :type cond_dep: string
-    
-    :cond_dep: choice of conditional dependence test
-            :'cond_dep_pcorr': partial correlation based test for Gaussian data
-            :'cond_dep_hsic': Hilbert-Schmidt criterion based test for Non-Gaussian data
-
     :returns: Weighted adjacency matrix of rolled graph, whose (i,j) entry represents the weight of causal relationships from variable i :math:`\\rightarrow` variable j. A non-zero weight indicates the presence of a causal relationship and zero weight indicates its absence.
     :rtype: numpy.array
         (shape is (p,p))
