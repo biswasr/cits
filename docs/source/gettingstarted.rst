@@ -4,7 +4,7 @@ Getting Started
 
 Use this tutorial to try out main functionalities of the cits Python library and test if it has installed properly. 
 
-In this tutorial, you will be estimating the adjacency matrix of the rolled causal graph from simulated datasets. A non-zero value of :math:`(i,j)` entry in this adjacency matrix indicates causal relationship from variable :math:`i \\rightarrow j`. 
+In this tutorial, you will be estimating the adjacency matrix of the rolled causal graph from simulated datasets. A non-zero value of :math:`(i,j)` entry in this adjacency matrix indicates causal relationship from variable :math:`i \rightarrow j`. 
 
 In neural connectomics, the rolled causal graph between neurons is referred as the causal functional connectivity between neurons.
 
@@ -59,7 +59,7 @@ The following example uses model = 'lingauss1':
 
 Estimate the adjacency matrix of the rolled causal graph of time series
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Unweighted adjacency: :math:`(i,j)` entry represents causal influence from :math:`i \\rightarrow j`.
+- Unweighted adjacency: :math:`(i,j)` entry represents causal influence from :math:`i \rightarrow j`.
 
 Use the cits_full to obtain the unweighted adjacency matrix.
 
@@ -76,7 +76,7 @@ Use the cits_full to obtain the unweighted adjacency matrix.
 	print("Estimated unweighted adjacency matrix: \n")
 	print(adj_matrix)
 
-- Weighted adjacency: :math:`(i,j)` entry has strength of causal influence from :math:`i \\rightarrow j`.
+- Weighted adjacency: :math:`(i,j)` entry has strength of causal influence from :math:`i \rightarrow j`.
 
 Use the cits_full_weighted to obtain the weighted adjacency matrix.
 
