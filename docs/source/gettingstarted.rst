@@ -1,6 +1,6 @@
-========
-Examples
-========
+===============
+Getting Started
+===============
 
 Use this tutorial to try out main functionalities of this library and test if it has installed properly. 
 In this tutorial, you will be estimating the adjacency matrix of the rolled causal graph from simulated datasets. In neural connectomics, the rolled causal graph between neurons is referred as the causal functional connectivity between neurons. 
