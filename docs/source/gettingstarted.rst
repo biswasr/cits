@@ -7,12 +7,16 @@ In this tutorial, you will be estimating the adjacency matrix of the rolled caus
 
 Load the CITS package
 ~~~~~~~~~~~~~~~~~~~~~
+
 .. code-block:: python
+
 	from cits import methods
 
 Load other packages
 ~~~~~~~~~~~~~~~~~~~
+
 .. code-block:: python
+
 	import time
 	import numpy as np
 	from numpy.random import default_rng
@@ -52,6 +56,7 @@ Estimate the adjacency matrix of the rolled causal graph of time series
 Use the cits_full to obtain the unweighted adjacency matrix.
 
 .. code-block:: python
+
 	print("True unweighted adjacency matrix: \n")
 	print(adj)
 	
@@ -68,6 +73,7 @@ Use the cits_full to obtain the unweighted adjacency matrix.
 Use the cits_full_weighted to obtain the unweighted adjacency matrix.
 
 .. code-block:: python
+	
 	print("True weighted adjacency matrix: \n")
 	print(adj_w)
 
