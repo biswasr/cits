@@ -2,6 +2,7 @@ README.md
 setup.py
 cits/__init__.py
 cits/methods.py
+cits/simulate_timeseries.py
 cits.egg-info/PKG-INFO
 cits.egg-info/SOURCES.txt
 cits.egg-info/dependency_links.txt
