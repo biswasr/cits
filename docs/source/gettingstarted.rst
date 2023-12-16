@@ -2,15 +2,25 @@
 Getting Started
 ===============
 
-Use this tutorial to try out main functionalities of this library and test if it has installed properly. 
-In this tutorial, you will be estimating the adjacency matrix of the rolled causal graph from simulated datasets. In neural connectomics, the rolled causal graph between neurons is referred as the causal functional connectivity between neurons. 
+Use this tutorial to try out main functionalities of the cits Python library and test if it has installed properly. 
+
+In this tutorial, you will be estimating the adjacency matrix of the rolled causal graph from simulated datasets. A non-zero value of (i,j) entry in this adjacency matrix indicates causal relationship from variable i -> j. 
+
+In neural connectomics, the rolled causal graph between neurons is referred as the causal functional connectivity between neurons.
+
+Install the CITS package
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+	!pip install cits
 
 Load the CITS package
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-	from cits import methods
+	from cits import methods, simulate_timeseries
 
 Load other packages
 ~~~~~~~~~~~~~~~~~~~
@@ -27,7 +37,7 @@ Simulate a dataset
 
 Use the simulate_timeseries function to simulate a time series dataset. It also outputs the ground truth adjacency matrix of the simulated time series.
 
-Choices of model type are: 
+Choices of model type are as follows. For details, see the paper. 
 
 - model = 'lingauss1' for Linear Gaussian Model 1
 - model = 'lingauss2' for Linear Gaussian Model 2
@@ -45,7 +55,7 @@ The following example uses model = 'lingauss1':
 	alpha = 0.05
 	lag=1
 
-	X, adj, adj_w = simulate_timeseries(model = 'lingauss1', noise = noise, T = T)
+	X, adj, adj_w = simulate_timeseries.simulate(model = 'lingauss1', noise = noise, T = T)
 
 Estimate the adjacency matrix of the rolled causal graph of time series
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
