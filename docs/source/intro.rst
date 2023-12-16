@@ -13,7 +13,7 @@ An application of interest is in neural connectomics to estimate the causal func
 
 CITS is non-parametric and does not require knowledge of dynamical equations of time series (e.g. time series of neural activity).
 
-CITS is widely applicable for time series data and CITS has mathematical guarantee in estimating the true causal graph under 1) widely applicable conditions on the underlying time series and 2) whenever the data is recorded at a finer time granularity than the time lag of causal effects, which ensures no concurrent causal effects. Examples of such datasets in neurosciences include recordings by the popular Neuropixels technology in animal models, where neurons are recorded at 30 KHz sampling rate which yields one sample per 0.03 ms while neural synaptic transmission has a delay of 0.5-1 ms for adjacent neurons and longer for non-adjacent neurons. This ensures the absence of concurrent causal effects.
+CITS is widely applicable for time series data and CITS has mathematical guarantee in estimating the true causal graph under 1) widely applicable conditions on the underlying time series and 2) whenever the data is recorded at a finer time granularity than the time lag of causal effects, which ensures no concurrent causal effects. Examples of such datasets in neurosciences include recordings by the popular Neuropixels technology in animal models, where neurons are recorded at 30 KHz sampling rate which yields one sample per 0.03 ms while neural synaptic transmission has a delay of 0.5-1 ms for adjacent neurons and longer for non-adjacent neurons.
 
 CITS is shown to have greater efficacy than the recent Time-Aware PC algorithm when there are no concurrent causal effects. 
 
