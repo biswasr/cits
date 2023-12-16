@@ -70,10 +70,10 @@ Use the cits_full to obtain the unweighted adjacency matrix.
 
 - Weighted adjacency: (i,j) entry has strength of causal influence from i->j.
 
-Use the cits_full_weighted to obtain the unweighted adjacency matrix.
+Use the cits_full_weighted to obtain the weighted adjacency matrix.
 
 .. code-block:: python
-	
+
 	print("True weighted adjacency matrix: \n")
 	print(adj_w)
 
