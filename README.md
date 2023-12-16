@@ -29,7 +29,9 @@ You can get the latest version of CITS package as follows
 
 ## Tutorial
 
-See the [Getting Started](https://cits.readthedocs.io/en/latest/gettingstarted.html) for a quick tutorial of the main functionalities of this library and check if it is installed properly. 
+Visit this [Google Colab](https://colab.research.google.com/drive/1TS_uVnbiW9Pb1ywBVjHdL-lnrdFkJ3wp?usp=sharing) for getting started with this package.
+
+Alternatively, see the [Getting Started](https://cits.readthedocs.io/en/latest/gettingstarted.html). 
 
 ## Contributing
 
