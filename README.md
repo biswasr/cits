@@ -39,4 +39,4 @@ Your help is absolutely welcome! Please do reach out or create a future branch!
 
 ## Citation
 
-Biswas, R., Sripada, S., & Mukherjee, S. (2023) Inferring Causality from Time Series data based on Structural Causal Model and its application to Neural Connectomics. In Review. [link](https://arxiv.org/abs/2312.09604)
+Biswas, R., Sripada, S., & Mukherjee, S. (2023) Inferring Causality from Time Series data based on Structural Causal Model and its application to Neural Connectomics. In Review. [https://arxiv.org/abs/2312.09604](https://arxiv.org/abs/2312.09604)
