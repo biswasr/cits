@@ -1,6 +1,6 @@
 # Python Package for CITS algorithm: Causal Inference from Time Series data
 
-CITS algorithm infers causal relationships in time series data based on structural causal model and Markovian condition of arbitrary but finite order. See the [paper](https://arxiv.org/abs/2312.09604) for details.
+CITS algorithm infers causal relationships in time series data based on structural causal model and Markovian condition of arbitrary but finite order. See the [paper](https://arxiv.org/abs/2508.01920) for details.
 
 ## Installation
 
