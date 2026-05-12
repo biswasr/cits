@@ -105,16 +105,20 @@ def partial_corr(A,B,S,data):
     for i in range(p):
         if i in S:
             idx[i]=True
-    C=data
-    beta_A = linalg.lstsq(C[idx,:].T, C[A,:].T)[0]
-    beta_B = linalg.lstsq(C[idx,:].T, C[B,:].T)[0]
+    C = data
 
-    res_A = C[A,:].T - C[idx,:].T.dot(beta_A)
-    res_B = C[B,:].T - C[idx,:].T.dot(beta_B)
-    
-    p_corr = stats.pearsonr(res_A, res_B)[0]  
-    
-    return p_corr
+    # conditioning matrix: (n_samples, n_conditioning_vars)
+    # prepend a column of ones so lstsq fits an intercept -> shift-invariant
+    Z = C[idx, :].T                                        # (n_samples, |S|)
+    Z = np.column_stack([np.ones(Z.shape[0]), Z])          # (n_samples, |S|+1)
+
+    beta_A = linalg.lstsq(Z, C[A, :].T)[0]
+    beta_B = linalg.lstsq(Z, C[B, :].T)[0]
+
+    res_A = C[A, :].T - Z.dot(beta_A)
+    res_B = C[B, :].T - Z.dot(beta_B)
+
+    return stats.pearsonr(res_A, res_B)[0]
 def hsic_condind(A,B,S,data,reps):
     """Computes p-value of conditional dependence test based on Hilbert-Schmidt criterion 
     """
@@ -179,8 +183,10 @@ def cits_unrolled(X,tau, alpha= 0.05,cond_dep ='cond_dep_pcorr'):
             #for t1 in range(tau+1,2*(tau+1)):#as not instantaneous, no point in considering t1=t
             for t1 in range(tau+1,2*tau+1):
                 #print('t1 '+ str(t1))
-                #for k in powerset(range(2*(tau+1))):
-                for k in powerset(range(2*(tau+1))):
+                # Condition on all unrolled-graph variables EXCEPT the two
+                # being tested (i=t*p+v and j=t1*p+v1).
+                for k in powerset(i for i in range(2*p*(tau+1))
+                                  if i != t*p+v and i != t1*p+v1):
                     if cond_dep_test(chi,(v,t),(v1,t1),k,p, alpha) == 0:
                         A[t1*p+v1,t*p+v] = 0
                         break

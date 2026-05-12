@@ -66,3 +66,30 @@ print("Estimated unweighted adjacency matrix: \n")
 print(adj_matrix)
 
 # %%
+# Regression test for v1.4 fixes:
+#   1. partial_corr now fits an intercept -> shift-invariant
+#   2. cits_unrolled conditioning set spans the full unrolled graph and
+#      excludes the two variables being tested
+#
+# Test by shifting the time series by large constants. With the intercept
+# fix, the recovered graph and weighted effects should be identical to
+# the unshifted run; without the fix, shifting biases the residuals and
+# can change the recovered graph.
+print("\n=== v1.4 regression test: shift-invariance of partial_corr ===")
+X_unshifted = generate_timeseries_A()
+adj_un, eff_un = methods.cits_full_weighted(X_unshifted, lag, alpha)
+
+shifts = np.array([[100.0], [-50.0], [1000.0], [0.0]])  # per-neuron shifts
+X_shifted = X_unshifted + shifts
+adj_sh, eff_sh = methods.cits_full_weighted(X_shifted, lag, alpha)
+
+print("Adjacency identical (shifted vs unshifted): ",
+      np.array_equal(adj_un, adj_sh))
+print("Weighted effects close (atol=1e-6):       ",
+      np.allclose(eff_un, eff_sh, atol=1e-6))
+assert np.array_equal(adj_un, adj_sh), \
+    "Shift-invariance broken: adjacency matrices differ"
+assert np.allclose(eff_un, eff_sh, atol=1e-6), \
+    "Shift-invariance broken: weighted effects differ"
+print("v1.4 regression test PASSED")
+
