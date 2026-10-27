@@ -267,18 +267,24 @@ def cits_contemporaneous(X, alpha: float = 0.05, tau: int = 1, backend: str = 'a
     except Exception as e:  # noqa: BLE001 - backend/CUDA failures are broad
         if name != 'cupc':
             raise
-        first = (str(e).splitlines() or [''])[0][:200]
-        short = f"{type(e).__name__}: {first}" if first else type(e).__name__
-        if backend == 'auto':
+        from ._cupc_wrapper import OutdatedCupcError
+        if isinstance(e, OutdatedCupcError):
+            # The message already says how to rebuild; keep it whole.
+            if backend != 'auto':
+                raise
+            log_warning(f"cits: {e}\nFalling back to the CPU backend, which has no level cap.")
+        else:
+            first = (str(e).splitlines() or [''])[0][:200]
+            short = f"{type(e).__name__}: {first}" if first else type(e).__name__
+            if backend != 'auto':
+                raise RuntimeError(
+                    f"cits: cuPC GPU call failed ({short}). Fix your cuPC/CUDA "
+                    f"setup or rerun with backend='cpu'.") from e
             log_warning(f"cits: cuPC GPU call failed ({short}); falling back "
                         f"to the CPU backend. See README 'GPU setup'.")
-            name = 'cpu'
-            cits_lagged_B, pc_skel, sep_sets = _skeleton_stages(
-                X, X_Tp, alpha, tau, 'cpu', verbose)
-        else:
-            raise RuntimeError(
-                f"cits: cuPC GPU call failed ({short}). Fix your cuPC/CUDA "
-                f"setup or rerun with backend='cpu'.") from e
+        name = 'cpu'
+        cits_lagged_B, pc_skel, sep_sets = _skeleton_stages(
+            X, X_Tp, alpha, tau, 'cpu', verbose)
 
     # ---- 3. Orient contemp skeleton (v-structures; optional Meek) ----
     if verbose:

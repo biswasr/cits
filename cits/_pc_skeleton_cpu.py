@@ -24,8 +24,12 @@ the edge decisions, match cuPC's Fisher-z test:
 Signature and return contract mirror ``pc_skeleton_cupc`` so the two are
 drop-in interchangeable:
 
-    pc_skeleton_cpu(X, alpha=0.05, max_level=14)
+    pc_skeleton_cpu(X, alpha=0.05, max_level=None)
         -> (G, sep_sets, inactive_neurons, final_level)
+
+There is no cap on the conditioning-set size by default (pure PC-stable). The
+search stops when no variable has enough neighbours, or when N - level - 3 <= 0
+(no test can then remove an edge), the same rule as the cuPC backend.
 
   X : (T, p) data matrix (samples x variables).
 """
@@ -36,9 +40,6 @@ import numpy as np
 from scipy import stats
 
 from .methods import partial_corr
-
-_ML = 14  # match cuPC's compile-time max conditioning level
-
 
 def _independent(x, y, S, data, alpha):
     """Fisher-z partial-correlation CI test. True iff x _||_ y | S.
@@ -65,8 +66,9 @@ def _independent(x, y, S, data, alpha):
     return pval > alpha
 
 
-def pc_skeleton_cpu(X, alpha: float = 0.05, max_level: int = _ML,
-                    zero_var_tol: float = 1e-12, verbose: bool = False):
+def pc_skeleton_cpu(X, alpha: float = 0.05, max_level=None,
+                    zero_var_tol: float = 1e-12, verbose: bool = False,
+                    return_sep_sets: bool = True):
     """Neighbor-restricted PC-stable skeleton on data matrix X (CPU).
 
     Parameters
@@ -75,12 +77,16 @@ def pc_skeleton_cpu(X, alpha: float = 0.05, max_level: int = _ML,
         Data matrix. Treated as N=T (approximately) independent samples.
     alpha : float
         Significance level for the Fisher-z partial-correlation CI test.
-    max_level : int
-        Max conditioning-set size (matches cuPC's compiled cap ML=14).
+    max_level : int or None
+        Max conditioning-set size. None (default) runs until no variable has
+        enough neighbours, with no cap. An int stops after that level.
     zero_var_tol : float
         Columns with variance below this are flagged inactive; their edges
         are deterministically removed (same handling as pc_skeleton_cupc).
     verbose : bool
+    return_sep_sets : bool
+        Return the separating sets (default). With False, ``sep_sets`` is
+        None, as in the cuPC backend.
 
     Returns
     -------
@@ -91,7 +97,8 @@ def pc_skeleton_cpu(X, alpha: float = 0.05, max_level: int = _ML,
     inactive_neurons : np.ndarray
         Indices of inactive (zero-variance) neurons.
     final_level : int
-        Final conditioning-set size reached.
+        The first level at which no test could run or remove an edge, or
+        ``max_level`` when the search stopped there.
     """
     X = np.ascontiguousarray(np.asarray(X, dtype=np.float64))
     if X.ndim != 2:
@@ -123,10 +130,12 @@ def pc_skeleton_cpu(X, alpha: float = 0.05, max_level: int = _ML,
     np.fill_diagonal(G, 0)
 
     sep_sets: dict = {}
-    cap = min(max_level, _ML) if max_level is not None else _ML
-
     level = 0
     while True:
+        if T - level - 3 <= 0:
+            # No test at this level or above can remove an edge (cuPC uses Th=0 here).
+            final_level = level
+            break
         # PC-stable: snapshot every node's adjacency at the START of the
         # level, so edge-removal order within the level cannot change the
         # result (this is what makes the skeleton order-independent and
@@ -166,7 +175,7 @@ def pc_skeleton_cpu(X, alpha: float = 0.05, max_level: int = _ML,
         final_level = level
         if not testable:
             break
-        if level >= cap:
+        if max_level is not None and level >= max_level:
             break
         level += 1
 
@@ -176,4 +185,4 @@ def pc_skeleton_cpu(X, alpha: float = 0.05, max_level: int = _ML,
             G[j, :] = 0
             G[:, j] = 0
 
-    return G, sep_sets, inactive_neurons, final_level
+    return G, (sep_sets if return_sep_sets else None), inactive_neurons, final_level

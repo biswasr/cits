@@ -139,9 +139,9 @@ neighbor-restricted PC-stable search on the GPU. This recovers the same graph
 under the faithfulness assumption CITS already makes. On one GPU it took about
 33 s for 1,000 variables (500 samples) and about 3 h for 2,000 variables
 (2,000 samples). The largest graph is set by GPU memory rather than run time.
-A 5,000-variable run failed in cuPC on our 32 GB GPU. It uses the
-partial-correlation test, infers lagged edges, and requires cuPC (see "GPU
-setup (cuPC)" below).
+A 5,000-variable run failed in cuPC on our 32 GB GPU. There is no cap on the
+conditioning-set size. It uses the partial-correlation test, infers lagged
+edges, and requires cuPC (see "GPU setup (cuPC)" below).
 
 ```python
 import cits
@@ -353,20 +353,26 @@ it, but base CITS, `cits_rcit` and `cits_contemporaneous` with the CPU backend
 run with no GPU at all, and `backend='auto'` selects the CPU automatically when
 no GPU is present.
 
-The GPU path calls [cuPC](https://github.com/LIS-Laboratory/cupc) (Zarebavani
-et al. 2020) for the Fisher-z skeleton search. Its compiled shared library
-`Skeleton.so` is a GPU/CUDA build, is not on PyPI, and is licensed separately
-under cuPC's own GPL-3.0 license. It is therefore **not bundled** with this
-package and is **not** in `install_requires`.
+The GPU path calls cuPC (Zarebavani et al. 2020) for the Fisher-z skeleton
+search, in a [fork maintained for CITS](https://github.com/abbasilab/cupc) of
+the [original cuPC](https://github.com/LIS-Laboratory/cupc). The fork fixes a
+32-bit overflow that could skip tests for variables with many neighbours, and
+it removes the original cap of 14 on the conditioning-set size. Its compiled
+shared library `Skeleton.so` is a GPU/CUDA build, is not on PyPI, and is
+licensed separately under cuPC's own GPL-3.0 license. It is therefore **not
+bundled** with this package and is **not** in `install_requires`.
 
 You need a CUDA-capable GPU and the CUDA toolkit (`nvcc`). Build `Skeleton.so`
-once from the cuPC source.
+once from the fork. It takes about 30 s.
 
 ```
-git clone https://github.com/LIS-Laboratory/cupc
+git clone https://github.com/abbasilab/cupc
 cd cupc
 nvcc -O3 --shared -Xcompiler -fPIC -o Skeleton.so cuPC-S.cu
 ```
+
+`cits.cupc_info()` shows which library is loaded. A build from the fork
+reports `'uncapped': True`.
 
 ### Telling the package where `Skeleton.so` is
 
@@ -386,6 +392,22 @@ cits.set_cupc_dir("/path/to/cupc")     # checks the path and remembers it
 once. If neither is set, the package checks a few default locations such as
 `./cupc` and, in an interactive terminal, asks once for the path. `import cits`
 never looks for cuPC, so everything except the GPU backend works without it.
+
+### An older cuPC build
+
+A `Skeleton.so` built from the original cuPC stops the PC search at
+conditioning level 14 and has the overflow above. CITS recognizes it and
+shows how to rebuild from the fork before it runs.
+
+- In an interactive session (a terminal or a notebook) it then asks once
+  whether to continue on the old build for this session.
+- A script cannot answer, so it stops with `cits.OutdatedCupcError`. Set
+  `CITS_ALLOW_OUTDATED_CUPC=1` to run a script on the old build anyway.
+- With `backend='auto'`, `cits_contemporaneous` shows the same message and
+  continues on the CPU backend, which has no level cap.
+
+On an old build the search stops at level 14. If you rebuild in the same
+folder, restart Python, because the operating system keeps the loaded copy.
 
 **Citation for cuPC** (`zarebavani2020cupc`). Zarebavani, B., Jafarinejad, F.,
 Hashemi, M. & Salehkaleybar, S. (2020). cuPC: CUDA-based Parallel PC Algorithm
@@ -461,7 +483,11 @@ python -m pytest test
 ```
 
 Tests that need cuPC or a GPU are skipped automatically. `test_paper_repro.py`
-also needs the authors' local benchmark data and is skipped elsewhere.
+also needs the authors' local benchmark data and is skipped elsewhere. Set
+`CITS_SLOW_TESTS=1` to add a slow comparison of the CPU and GPU searches
+beyond level 14. `test_arousal_skeleton_repro.py` runs when
+`CITS_AROUSAL_SKELETON_DIR` points to stored skeletons of the authors'
+calcium-imaging analysis.
 
 ## Documentation
 

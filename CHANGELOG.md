@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.10.0
+
+- **No cap on the conditioning-set size.** The neighbour-restricted PC search
+  used by `cits_gpu`, `cits_contemporaneous` and `pc_skeleton_raw` stopped at
+  conditioning level 14, on the GPU (cuPC's compile-time limit) and on the CPU
+  (for parity). It now runs until no variable has enough neighbours, as the PC
+  algorithm specifies. `max_level` defaults to None, and an int still caps the
+  search on request. On 192 skeletons of a calcium-imaging analysis, 179
+  searches went past level 14, and 135 of them removed edges there (1,172 in
+  total).
+- **cuPC from the CITS fork.** The GPU backend now uses a `Skeleton.so` built
+  from https://github.com/abbasilab/cupc. The fork adds a generic kernel for
+  any conditioning level, checks every kernel launch, and fixes a 32-bit
+  overflow in the original combination counters. The overflow could skip tests
+  for variables with many neighbours (from degree 1,627 at level 3 down to 31
+  at level 14), so some edges that should have been removed survived.
+- **Older cuPC builds.** CITS reads `cupc_cits_version()` from the library. On
+  a build of the original cuPC it shows how to rebuild. An interactive session
+  then asks once whether to continue on the old build, which stops at level
+  14. A script raises `cits.OutdatedCupcError` unless
+  `CITS_ALLOW_OUTDATED_CUPC=1` is set. With `backend='auto'`,
+  `cits_contemporaneous` continues on the CPU backend instead.
+  `cits.cupc_info()` reports the loaded library.
+- `cits.set_cupc_dir()` now loads the library from the new folder on the next
+  call.
+- Both backends stop at the first level where no test can run or remove an
+  edge (including N - level - 3 <= 0) and report the same final level.
+- `pc_skeleton_cupc` and `pc_skeleton_cpu` take `return_sep_sets`. `cits_gpu`
+  no longer builds separating sets that it does not use.
+
 ## v1.9.3
 
 - **cuPC thresholds.** The cuPC wrapper (used by `cits_gpu`, by

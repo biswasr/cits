@@ -1,7 +1,8 @@
 """
 cits._cupc_wrapper (internal)
 
-Python ctypes wrapper for cuPC (Zarebavani et al. 2020, TPDS).
+Python ctypes wrapper for cuPC (Zarebavani et al. 2020, TPDS), in the CITS fork
+(https://github.com/abbasilab/cupc).
 
 Shared library location
 ------------------------
@@ -31,33 +32,25 @@ Notebook / non-interactive users can set the path programmatically with
 Discovery only runs when a GPU/contemporaneous function is actually called, never
 at ``import cits`` time.
 
-Build cuPC::
+Build cuPC (the CITS fork)::
 
-    cd $CUPC_DIR
-    nvcc -O3 --shared -Xcompiler -fPIC -o Skeleton.so cuPC-S.cu
+    git clone https://github.com/abbasilab/cupc
+    cd cupc && nvcc -O3 --shared -Xcompiler -fPIC -o Skeleton.so cuPC-S.cu
 
-C entry point (from cuPC-S.h):
-  extern "C" void Skeleton(double* C, int *P, int *G, double *Th,
-                           int *l, int *maxlevel, double *pMax, int* SepSet);
+Library versions
+----------------
+The fork exports ``cupc_cits_version()``. With version >= 1 the skeleton runs
+every conditioning level on the GPU with no cap on the conditioning-set size
+(``cits._cupc_ext``), and every kernel launch is checked.
 
-  C       : (p, p) double, correlation matrix, row-major flat
-  P       : pointer to int p (number of variables)
-  G       : (p, p) int, initial adjacency (1=edge, 0=no edge), diag 0;
-            updated in place to skeleton output
-  Th      : double array, threshold per level. Th[l] = |z_{alpha/2}| / sqrt(N - l - 3)
-            Length >= 14 (cuPC's max level cap ML=14).
-  l       : pointer to int, final level reached (updated in place)
-  maxlevel: pointer to int, cap on level
-  pMax    : (p, p) double, max |partial r| per edge (NOT a p-value -- the
-            R wrapper sets pMax[which(pMax == -100000)] <- -Inf so that's
-            the "no test" sentinel)
-  SepSet  : (p*p, 14) int, separating set per edge (-1 padded);
-            stored as flat (p*p*14,) but layout is row-major (p*p) outer
-            and 14 inner, with sepsetmat[(i*p+j), :] = sep_set values
-            for the edge (i, j).
+A library without that function (the original cuPC) stops at level 14 and has
+32-bit combination counters that can skip tests for variables with many
+neighbours. CITS then explains how to rebuild. In an interactive session it
+asks once whether to continue on the old build. In a script it raises
+``OutdatedCupcError``, unless ``CITS_ALLOW_OUTDATED_CUPC=1`` is set.
 
 This wrapper:
-  pc_skeleton_cupc(X, alpha=0.05, max_level=14)
+  pc_skeleton_cupc(X, alpha=0.05, max_level=None)
       -> (G, sep_sets, inactive_neurons, final_level)
 
   X : (T, p) data matrix (samples x variables).
@@ -70,9 +63,12 @@ import numpy as np
 from scipy.stats import norm
 
 import sys
+import warnings
+
+from . import _cupc_ext
 
 _LIB_NAME = "Skeleton.so"
-_CUPC_SOURCE_URL = "https://github.com/LIS-Laboratory/cupc"
+_CUPC_SOURCE_URL = "https://github.com/abbasilab/cupc"  # the CITS fork of LIS-Laboratory/cupc
 
 # Resolved cuPC directory, cached once per process (see _locate_cupc_dir).
 _CUPC_DIR_CACHE = None
@@ -155,10 +151,10 @@ def _not_found_error():
         f"Fix it in any of these ways:\n"
         f"  - export CUPC_DIR=/path/to/cupc\n"
         f"  - call cits.set_cupc_dir('/path/to/cupc') (persists for future runs)\n"
-        f"Build the library once with nvcc:\n"
-        f"    cd /path/to/cupc && nvcc -O3 --shared -Xcompiler -fPIC "
-        f"-o {_LIB_NAME} cuPC-S.cu\n"
-        f"Get the cuPC source from {_CUPC_SOURCE_URL}")
+        f"Build the library once with nvcc (about 30 s):\n"
+        f"    git clone {_CUPC_SOURCE_URL}\n"
+        f"    cd cupc && nvcc -O3 --shared -Xcompiler -fPIC "
+        f"-o {_LIB_NAME} cuPC-S.cu")
 
 
 def _prompt_for_dir(max_attempts=3):
@@ -281,24 +277,55 @@ def set_cupc_dir(path):
     FileNotFoundError
         If `path` does not contain Skeleton.so.
     """
-    global _CUPC_DIR_CACHE
+    global _CUPC_DIR_CACHE, _LIB, _LIB_INFO, _OUTDATED_OK
     cupc_dir = _normalize_dir(str(path))
     if not _has_skeleton(cupc_dir):
         raise FileNotFoundError(
             f"No {_LIB_NAME} found in {cupc_dir!r}. Build it with:\n"
-            f"    cd {cupc_dir} && nvcc -O3 --shared -Xcompiler -fPIC "
-            f"-o {_LIB_NAME} cuPC-S.cu\n"
-            f"Get the cuPC source from {_CUPC_SOURCE_URL}")
+            f"    git clone {_CUPC_SOURCE_URL}\n"
+            f"    cd cupc && nvcc -O3 --shared -Xcompiler -fPIC "
+            f"-o {_LIB_NAME} cuPC-S.cu")
     _persist_dir(cupc_dir)
     _CUPC_DIR_CACHE = cupc_dir
+    # Load the library from the new directory on next use. A library rebuilt in place under the same path
+    # needs a fresh Python process, because the operating system keeps the loaded copy.
+    _LIB, _LIB_INFO, _OUTDATED_OK = None, None, None
     return cupc_dir
 
 
-_ML = 14  # cuPC compile-time max level
+_ML = 14  # level cap of the original cuPC kernels (used only on an outdated library)
+_REQUIRED_VERSION = 1  # cupc_cits_version() of the CITS fork that CITS needs
+_ALLOW_ENV = "CITS_ALLOW_OUTDATED_CUPC"
+
+
+class OutdatedCupcError(RuntimeError):
+    """The cuPC library is not the CITS fork, or is older than this CITS needs."""
+
+
+def _rebuild_steps():
+    return ("Rebuild it from the CITS fork of cuPC (about 30 s):\n"
+            f"    git clone {_CUPC_SOURCE_URL}\n"
+            f"    cd cupc && nvcc -O3 --shared -Xcompiler -fPIC -o {_LIB_NAME} cuPC-S.cu\n"
+            "Then point CITS to it with cits.set_cupc_dir('/path/to/cupc') or "
+            "export CUPC_DIR=/path/to/cupc.")
+
+
+def _outdated_message(info):
+    if info.get("dev_build"):
+        what = ("is a development build of the extended kernels without a version. Its Skeleton() "
+                "function takes a different argument list, so CITS cannot use it")
+    elif info["version"] is None:
+        what = ("comes from the original cuPC. It stops the PC search at conditioning level 14, and its "
+                "32-bit counters can skip tests for variables with many neighbours, so edges that "
+                "should be removed can survive")
+    else:
+        what = (f"is version {info['version']} of the CITS fork, older than the version "
+                f"{_REQUIRED_VERSION} this CITS needs")
+    return f"The cuPC library {info['path']} {what}.\n" + _rebuild_steps()
 
 
 def _load_lib():
-    """Load Skeleton.so and configure the Skeleton symbol's argtypes."""
+    """Load Skeleton.so, read its CITS version and bind the functions it offers."""
     cupc_dir = _locate_cupc_dir()
     lib_path = os.path.join(cupc_dir, _LIB_NAME)
     lib = ctypes.CDLL(lib_path)
@@ -313,46 +340,147 @@ def _load_lib():
         ctypes.POINTER(ctypes.c_double),  # pMax
         ctypes.POINTER(ctypes.c_int),     # SepSet
     ]
-    return lib
+    try:
+        version_fn = lib.cupc_cits_version
+    except AttributeError:
+        version = None
+    else:
+        version_fn.restype = ctypes.c_int
+        version_fn.argtypes = []
+        version = int(version_fn())
+    dev_build = version is None and hasattr(lib, "ext_create")
+    uncapped = version is not None and version >= _REQUIRED_VERSION
+    if uncapped:
+        _cupc_ext.bind(lib)
+    return lib, dict(path=lib_path, version=version, uncapped=uncapped, dev_build=dev_build)
 
 
 _LIB = None
+_LIB_INFO = None
+_OUTDATED_OK = None  # per-process answer about an outdated library (None = not asked yet)
 
 
 def _get_lib():
-    global _LIB
+    global _LIB, _LIB_INFO
     if _LIB is None:
-        _LIB = _load_lib()
+        _LIB, _LIB_INFO = _load_lib()
     return _LIB
 
 
+def cupc_info():
+    """Describe the cuPC library that CITS loads.
+
+    Returns a dict with ``path``, ``version`` (``cupc_cits_version()``, or
+    None for the original cuPC) and ``uncapped`` (True when the PC search has
+    no cap on the conditioning-set size). Raises FileNotFoundError when no
+    ``Skeleton.so`` is found. It never prompts about an outdated build.
+    """
+    _get_lib()
+    return {k: _LIB_INFO[k] for k in ("path", "version", "uncapped")}
+
+
+def _interactive():
+    """True in a terminal or a Jupyter kernel, where a prompt can be answered."""
+    try:
+        if sys.stdin is not None and sys.stdin.isatty():
+            return True
+    except (AttributeError, ValueError):
+        pass
+    ipython = sys.modules.get("IPython")
+    if ipython is not None and "ipykernel" in sys.modules:
+        try:
+            shell = ipython.get_ipython()
+        except Exception:
+            shell = None
+        return shell is not None and getattr(shell, "kernel", None) is not None
+    return False
+
+
+def _confirm_outdated():
+    """Decide, once per process, whether to run on an outdated library. Returns True or raises
+    OutdatedCupcError."""
+    global _OUTDATED_OK
+    info = _LIB_INFO
+    msg = _outdated_message(info)
+    if info.get("dev_build"):
+        raise OutdatedCupcError(msg)
+    if _OUTDATED_OK:
+        return True
+    if os.environ.get(_ALLOW_ENV, "").strip().lower() in ("1", "true", "yes"):
+        warnings.warn(f"{msg}\nContinuing because {_ALLOW_ENV} is set. The PC search stops at "
+                      "conditioning level 14.", UserWarning, stacklevel=3)
+        _OUTDATED_OK = True
+        return True
+    if _OUTDATED_OK is False:
+        raise OutdatedCupcError(msg)
+    if _interactive():
+        print(f"cits warning: {msg}", file=sys.stderr, flush=True)
+        try:
+            answer = input("Continue on this outdated build for this session? The PC search then stops "
+                           "at conditioning level 14. [y/N] ")
+        except (EOFError, OSError, RuntimeError, NotImplementedError):
+            answer = ""
+        if answer.strip().lower() in ("y", "yes"):
+            _OUTDATED_OK = True
+            warnings.warn("cits: running on an outdated cuPC build. The PC search stops at conditioning "
+                          "level 14.", UserWarning, stacklevel=3)
+            return True
+        _OUTDATED_OK = False
+        raise OutdatedCupcError(msg)
+    raise OutdatedCupcError(f"{msg}\nTo run on this build anyway, set {_ALLOW_ENV}=1. The PC search then "
+                            "stops at conditioning level 14.")
+
+
 def _cupc_thresholds(N, alpha):
-    """Thresholds passed to cuPC. cuPC-S.cu runs conditioning levels 0 to ML
-    (ML = 14) and reads Th[l] at level l, so ML + 1 values are needed. (The
-    original R wrapper allocates 50.)"""
+    """Thresholds passed to the original cuPC Skeleton(). It runs conditioning
+    levels 0 to ML (ML = 14) and reads Th[l] at level l, so ML + 1 values are
+    needed. (The original R wrapper allocates 50.)"""
     return _fisher_thresholds(N, alpha, n_levels=_ML + 1)
 
 
 def _fisher_thresholds(N, alpha, n_levels=_ML):
-    """Compute the per-level Fisher-z threshold used by cuPC.
-
-    Th[l] = |z_{alpha/2}| / sqrt(N - l - 3)
-    Matches the R wrapper's threshold definition (cuPC.R line 91).
-    """
-    z = abs(norm.ppf(alpha / 2.0))
-    th = np.zeros(n_levels, dtype=np.float64)
-    for l in range(n_levels):
-        df = N - l - 3
-        if df > 0:
-            th[l] = z / np.sqrt(df)
-        else:
-            th[l] = 0.0
-    return th
+    """Per-level Fisher-z thresholds, Th[l] = |z_{alpha/2}| / sqrt(N - l - 3)
+    (0 when N - l - 3 <= 0). Matches the R wrapper (cuPC.R line 91)."""
+    return np.array([_cupc_ext.fisher_threshold(N, l, alpha) for l in range(n_levels)], dtype=np.float64)
 
 
-def pc_skeleton_cupc(X, alpha: float = 0.05, max_level: int = _ML,
-                     zero_var_tol: float = 1e-12, verbose: bool = False):
-    """Run cuPC skeleton on data matrix X.
+def _legacy_skeleton(lib, C, T, alpha, max_level, return_sep_sets):
+    """Original cuPC Skeleton(), capped at level 14 (only on an outdated library the user accepted)."""
+    p = C.shape[0]
+    G = np.ones((p, p), dtype=np.int32)
+    np.fill_diagonal(G, 0)
+    G = np.ascontiguousarray(G)
+    Th = np.ascontiguousarray(_cupc_thresholds(T, alpha), dtype=np.float64)
+    p_int = np.array([p], dtype=np.int32)
+    l_int = np.array([0], dtype=np.int32)
+    cap = _ML if max_level is None else min(int(max_level), _ML)
+    maxlevel_int = np.array([cap], dtype=np.int32)
+    pMax = np.ascontiguousarray(np.zeros((p, p), dtype=np.float64))
+    SepSet = np.ascontiguousarray(np.full((p * p, _ML), -1, dtype=np.int32))
+    lib.Skeleton(
+        C.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        p_int.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
+        G.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
+        Th.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        l_int.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
+        maxlevel_int.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
+        pMax.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+        SepSet.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
+    )
+    sep_sets = None
+    if return_sep_sets:
+        sep_sets = {}
+        rows = SepSet.reshape(p * p, _ML)
+        I, J = np.nonzero((G == 0) & ~np.eye(p, dtype=bool))
+        for i, j in zip(I.tolist(), J.tolist()):
+            sep_sets[(i, j)] = tuple(int(v) for v in rows[i * p + j] if v != -1)
+    return G, sep_sets, int(l_int[0])
+
+
+def pc_skeleton_cupc(X, alpha: float = 0.05, max_level=None,
+                     zero_var_tol: float = 1e-12, verbose: bool = False,
+                     return_sep_sets: bool = True):
+    """Run the cuPC PC-stable skeleton on data matrix X.
 
     Parameters
     ----------
@@ -360,23 +488,29 @@ def pc_skeleton_cupc(X, alpha: float = 0.05, max_level: int = _ML,
         Data matrix. Treated as N=T independent samples.
     alpha : float
         Significance level for the Fisher-z partial-correlation test.
-    max_level : int
-        Max conditioning-set size. cuPC's compiled limit is ML=14.
+    max_level : int or None
+        Max conditioning-set size. None (default) runs until no variable has
+        enough neighbours, with no cap. An int stops after that level.
     zero_var_tol : float
         Columns with variance below this are flagged inactive; their
         edges are deterministically removed.
     verbose : bool
+    return_sep_sets : bool
+        Return the separating sets (default). With False, ``sep_sets`` is
+        None, which saves memory for large graphs.
 
     Returns
     -------
     G : np.ndarray, shape (p, p), int
         Symmetric undirected skeleton. G[i, j] = 1 if edge retained.
-    sep_sets : dict[(i, j) -> tuple[int]]
-        Separating set used to remove each removed edge.
+    sep_sets : dict[(i, j) -> tuple[int]] or None
+        Separating set used to remove each removed edge (both orderings).
+        When several sets separate a pair, the GPU may record any of them.
     inactive_neurons : np.ndarray
         Indices of inactive (zero-variance) neurons.
     final_level : int
-        Final conditioning-set size reached.
+        The first level at which no test could run or remove an edge, or
+        ``max_level`` when the search stopped there.
     """
     lib = _get_lib()
 
@@ -404,64 +538,20 @@ def pc_skeleton_cupc(X, alpha: float = 0.05, max_level: int = _ML,
             X[:, j] = rng.standard_normal(T) * 1e-10
 
     # Correlation matrix (row-major flat)
-    C = np.corrcoef(X.T)  # (p, p), symmetric, diag 1
-    C = np.ascontiguousarray(C, dtype=np.float64)
+    C = np.ascontiguousarray(np.corrcoef(X.T), dtype=np.float64)
 
-    # Initial G: full, no self-loops
-    G = np.ones((p, p), dtype=np.int32)
-    np.fill_diagonal(G, 0)
-    G = np.ascontiguousarray(G)
-
-    # Thresholds
-    Th = _cupc_thresholds(T, alpha)
-    Th = np.ascontiguousarray(Th, dtype=np.float64)
-
-    # Outputs
-    p_int = np.array([p], dtype=np.int32)
-    l_int = np.array([0], dtype=np.int32)
-    maxlevel_int = np.array([min(max_level, _ML)], dtype=np.int32)
-    pMax = np.zeros((p, p), dtype=np.float64)
-    pMax = np.ascontiguousarray(pMax)
-    SepSet = np.full((p * p, _ML), -1, dtype=np.int32)
-    SepSet = np.ascontiguousarray(SepSet)
-
-    # Call into cuPC
-    lib.Skeleton(
-        C.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-        p_int.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
-        G.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
-        Th.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-        l_int.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
-        maxlevel_int.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
-        pMax.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-        SepSet.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
-    )
-
-    final_level = int(l_int[0])
+    if _LIB_INFO["uncapped"]:
+        G, sep_sets, final_level = _cupc_ext.skeleton(
+            lib, C, T, alpha=alpha, max_level=max_level,
+            return_sep_sets=return_sep_sets, verbose=verbose)
+    else:
+        _confirm_outdated()
+        G, sep_sets, final_level = _legacy_skeleton(lib, C, T, alpha, max_level, return_sep_sets)
 
     # Force-remove edges incident on inactive neurons (defensive: should
     # already be zero from the noise, but be explicit).
     if inactive_neurons.size > 0:
-        for j in inactive_neurons:
-            G[j, :] = 0
-            G[:, j] = 0
-
-    # Build sep_sets dict from the SepSet matrix.
-    # SepSet layout: for edge (i, j), row index = i * p + j; columns = -1 padded sep set.
-    # The R wrapper only fills sepset for REMOVED edges (per its loop).
-    # We replicate that: an edge (i, j) has a non-empty SepSet row iff at
-    # least one column != -1 AND G[i, j] == 0.
-    sep_sets = {}
-    SepSet_2d = SepSet.reshape(p * p, _ML)
-    for i in range(p):
-        for j in range(p):
-            if i == j:
-                continue
-            if G[i, j] != 0:
-                continue  # edge retained, no sep_set
-            row_idx = i * p + j
-            row = SepSet_2d[row_idx]
-            sep_tuple = tuple(int(v) for v in row if v != -1)
-            sep_sets[(i, j)] = sep_tuple
+        G[inactive_neurons, :] = 0
+        G[:, inactive_neurons] = 0
 
     return G, sep_sets, inactive_neurons, final_level

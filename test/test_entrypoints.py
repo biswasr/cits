@@ -30,11 +30,10 @@ def _toy_series(p=4, T=800, seed=0):
 
 
 def _cupc_available():
-    """True iff cuPC Skeleton.so can be loaded."""
+    """True iff the CITS fork of cuPC (no level cap) can be loaded."""
     try:
-        from cits._cupc_wrapper import _get_lib
-        _get_lib()
-        return True
+        from cits._cupc_wrapper import cupc_info
+        return bool(cupc_info()["uncapped"])
     except Exception:
         return False
 

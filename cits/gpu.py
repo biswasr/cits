@@ -22,9 +22,11 @@ Matched to exact CITS:
     cits_unrolled's tested edge set and cits_rolled's collapse.
 
 Only remaining difference from cits_full(pcorr): powerset conditioning ->
-neighbor-restricted increasing-size search (cuPC, capped at level 14).
+neighbor-restricted increasing-size search (cuPC, with no cap on the
+conditioning-set size).
 
-Requires a compiled cuPC ``Skeleton.so`` and a CUDA-capable GPU. See
+Requires a compiled cuPC ``Skeleton.so`` from the CITS fork
+(https://github.com/abbasilab/cupc) and a CUDA-capable GPU. See
 ``cits._cupc_wrapper`` (and the README "GPU setup (cuPC)" section) for the
 ``CUPC_DIR`` environment variable and build instructions.
 """
@@ -54,7 +56,7 @@ def _build_chi_nonoverlap(X: np.ndarray, tau: int) -> np.ndarray:
 
 
 def _lag_rolled_from_skeleton(X, skeleton_fn, alpha=0.05, tau=1,
-                              max_level=14, verbose=False):
+                              max_level=None, verbose=False):
     """Faithful scalable CITS-lag rolled adjacency, using an arbitrary
     neighbor-restricted PC skeleton backend.
 
@@ -69,7 +71,7 @@ def _lag_rolled_from_skeleton(X, skeleton_fn, alpha=0.05, tau=1,
     U = _build_chi_nonoverlap(X, tau)             # (N, p*w), c = t*p + v
 
     G_unrolled, _sep, _inactive, _lvl = skeleton_fn(
-        U, alpha=alpha, max_level=max_level, verbose=verbose)
+        U, alpha=alpha, max_level=max_level, verbose=verbose, return_sep_sets=False)
 
     # Targeted extraction: edges (v1, t1) -> (v2, t_target) into the present
     # slice, sources in the recent-past window -- identical to cits_unrolled.
@@ -87,7 +89,7 @@ def _lag_rolled_from_skeleton(X, skeleton_fn, alpha=0.05, tau=1,
 
 
 def cits_gpu(X: np.ndarray, alpha: float = 0.05, tau: int = 1,
-             max_level: int = 14, verbose: bool = False) -> np.ndarray:
+             max_level=None, verbose: bool = False) -> np.ndarray:
     """Faithful scalable CITS-lag (rolled adjacency), Fisher-z via cuPC (GPU).
 
     GPU accelerator for the lagged CITS skeleton. It matches base CITS
@@ -95,8 +97,8 @@ def cits_gpu(X: np.ndarray, alpha: float = 0.05, tau: int = 1,
     except that the exponential powerset conditioning search is replaced by
     cuPC's neighbor-restricted PC-stable search on the GPU, which is sound
     under the faithfulness assumption CITS already requires. Scales to
-    thousands of variables, limited by GPU memory. Requires a compiled cuPC ``Skeleton.so`` and a
-    CUDA-capable GPU (see the README "GPU setup (cuPC)" section).
+    thousands of variables, limited by GPU memory. Requires a compiled cuPC ``Skeleton.so`` from the
+    CITS fork and a CUDA-capable GPU (see the README "GPU setup (cuPC)" section).
 
     Parameters
     ----------
@@ -108,8 +110,9 @@ def cits_gpu(X: np.ndarray, alpha: float = 0.05, tau: int = 1,
         Default 0.05.
     tau : int
         CITS Markovian order / maximum lag. Default 1 (paper default).
-    max_level : int
-        Max conditioning-set size passed to cuPC (compiled cap ML=14).
+    max_level : int or None
+        Max conditioning-set size. None (default) runs the PC search until no
+        variable has enough neighbours, with no cap. An int stops after that level.
     verbose : bool
 
     Returns

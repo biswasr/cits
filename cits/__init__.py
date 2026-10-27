@@ -21,8 +21,10 @@ Or dispatch by name with ``cits.run(X, method)``, where method is one of
 
 ``import cits`` always succeeds on a CPU-only machine. ``cits_gpu`` (and
 ``cits_contemporaneous(backend='cupc')``) need a compiled cuPC ``Skeleton.so``
-and a CUDA GPU, and raise a clear error at call time when it is unavailable
-(see the README "GPU setup (cuPC)" section).
+from the CITS fork (https://github.com/abbasilab/cupc) and a CUDA GPU, and
+raise a clear error at call time when it is unavailable (see the README "GPU
+setup (cuPC)" section). ``cits.cupc_info()`` reports which library is loaded.
+The neighbor-restricted search has no cap on the conditioning-set size.
 
 Extras:
   - ``cits.plot_graph`` / ``cits.plot_matrix`` -- publication-style figures
@@ -34,7 +36,7 @@ Logging: messages go through ``logging.getLogger('cits')``. Set its level to
 control verbosity; ``CITS_QUIET=1`` silences informational notices.
 """
 
-__version__ = "1.9.3"
+__version__ = "1.10.0"
 
 import warnings
 
@@ -44,7 +46,7 @@ from . import methods, simulate_timeseries
 # notebook / non-interactive users set and persist the cuPC location
 # programmatically, bypassing the interactive prompt.
 try:
-    from ._cupc_wrapper import set_cupc_dir
+    from ._cupc_wrapper import set_cupc_dir, cupc_info, OutdatedCupcError
 except Exception as _set_cupc_err:  # pragma: no cover - env dependent
     _set_cupc_dir_err = _set_cupc_err
 
@@ -53,6 +55,15 @@ except Exception as _set_cupc_err:  # pragma: no cover - env dependent
             "cits.set_cupc_dir is unavailable because cits._cupc_wrapper "
             f"failed to import. Original import error: {_set_cupc_dir_err!r}"
         ) from _set_cupc_dir_err
+
+    def cupc_info():
+        raise ImportError(
+            "cits.cupc_info is unavailable because cits._cupc_wrapper "
+            f"failed to import. Original import error: {_set_cupc_dir_err!r}"
+        ) from _set_cupc_dir_err
+
+    class OutdatedCupcError(RuntimeError):
+        """Placeholder when cits._cupc_wrapper failed to import."""
 
 # GPU and contemporaneous entry points. Import failures (e.g. missing optional
 # dependencies) must not break `import cits` or the base CPU algorithm, so
@@ -190,6 +201,8 @@ __all__ = [
     "cits_rcit",
     "run",
     "set_cupc_dir",
+    "cupc_info",
+    "OutdatedCupcError",
     "plot_graph",
     "plot_matrix",
     "cite",

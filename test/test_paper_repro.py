@@ -29,10 +29,10 @@ _MASK = os.path.join(_DATA, "ID791319847_gabors_units2use_stim_gabors.p")
 
 
 def _cupc_available():
+    """True iff the CITS fork of cuPC (no level cap) can be loaded."""
     try:
-        from cits._cupc_wrapper import _get_lib
-        _get_lib()
-        return True
+        from cits._cupc_wrapper import cupc_info
+        return bool(cupc_info()["uncapped"])
     except Exception:
         return False
 
