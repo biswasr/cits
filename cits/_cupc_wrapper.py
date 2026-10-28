@@ -2,7 +2,7 @@
 cits._cupc_wrapper (internal)
 
 Python ctypes wrapper for cuPC (Zarebavani et al. 2020, TPDS), in the CITS fork
-(https://github.com/abbasilab/cupc).
+(https://github.com/biswasr/cupc).
 
 Shared library location
 ------------------------
@@ -34,7 +34,7 @@ at ``import cits`` time.
 
 Build cuPC (the CITS fork)::
 
-    git clone https://github.com/abbasilab/cupc
+    git clone https://github.com/biswasr/cupc
     cd cupc && nvcc -O3 --shared -Xcompiler -fPIC -o Skeleton.so cuPC-S.cu
 
 Library versions
@@ -68,7 +68,7 @@ import warnings
 from . import _cupc_ext
 
 _LIB_NAME = "Skeleton.so"
-_CUPC_SOURCE_URL = "https://github.com/abbasilab/cupc"  # the CITS fork of LIS-Laboratory/cupc
+_CUPC_SOURCE_URL = "https://github.com/biswasr/cupc"  # the CITS fork of LIS-Laboratory/cupc
 
 # Resolved cuPC directory, cached once per process (see _locate_cupc_dir).
 _CUPC_DIR_CACHE = None

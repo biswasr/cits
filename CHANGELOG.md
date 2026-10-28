@@ -11,7 +11,7 @@
   searches went past level 14, and 135 of them removed edges there (1,172 in
   total).
 - **cuPC from the CITS fork.** The GPU backend now uses a `Skeleton.so` built
-  from https://github.com/abbasilab/cupc. The fork adds a generic kernel for
+  from https://github.com/biswasr/cupc. The fork adds a generic kernel for
   any conditioning level, checks every kernel launch, and fixes a 32-bit
   overflow in the original combination counters. The overflow could skip tests
   for variables with many neighbours (from degree 1,627 at level 3 down to 31

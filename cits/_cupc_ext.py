@@ -2,7 +2,7 @@
 cits._cupc_ext (internal)
 
 Driver for the uncapped GPU skeleton of the CITS fork of cuPC
-(https://github.com/abbasilab/cupc, ``cupc_cits_version() >= 1``).
+(https://github.com/biswasr/cupc, ``cupc_cits_version() >= 1``).
 
 The fork adds a per-level host API (``ext_*``) to cuPC. This module runs the
 PC-stable search one level per call:

@@ -354,7 +354,7 @@ run with no GPU at all, and `backend='auto'` selects the CPU automatically when
 no GPU is present.
 
 The GPU path calls cuPC (Zarebavani et al. 2020) for the Fisher-z skeleton
-search, in a [fork maintained for CITS](https://github.com/abbasilab/cupc) of
+search, in a [fork maintained for CITS](https://github.com/biswasr/cupc) of
 the [original cuPC](https://github.com/LIS-Laboratory/cupc). The fork fixes a
 32-bit overflow that could skip tests for variables with many neighbours, and
 it removes the original cap of 14 on the conditioning-set size. Its compiled
@@ -366,7 +366,7 @@ You need a CUDA-capable GPU and the CUDA toolkit (`nvcc`). Build `Skeleton.so`
 once from the fork. It takes about 30 s.
 
 ```
-git clone https://github.com/abbasilab/cupc
+git clone https://github.com/biswasr/cupc
 cd cupc
 nvcc -O3 --shared -Xcompiler -fPIC -o Skeleton.so cuPC-S.cu
 ```

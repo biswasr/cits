@@ -26,7 +26,7 @@ neighbor-restricted increasing-size search (cuPC, with no cap on the
 conditioning-set size).
 
 Requires a compiled cuPC ``Skeleton.so`` from the CITS fork
-(https://github.com/abbasilab/cupc) and a CUDA-capable GPU. See
+(https://github.com/biswasr/cupc) and a CUDA-capable GPU. See
 ``cits._cupc_wrapper`` (and the README "GPU setup (cuPC)" section) for the
 ``CUPC_DIR`` environment variable and build instructions.
 """

@@ -21,7 +21,7 @@ Or dispatch by name with ``cits.run(X, method)``, where method is one of
 
 ``import cits`` always succeeds on a CPU-only machine. ``cits_gpu`` (and
 ``cits_contemporaneous(backend='cupc')``) need a compiled cuPC ``Skeleton.so``
-from the CITS fork (https://github.com/abbasilab/cupc) and a CUDA GPU, and
+from the CITS fork (https://github.com/biswasr/cupc) and a CUDA GPU, and
 raise a clear error at call time when it is unavailable (see the README "GPU
 setup (cuPC)" section). ``cits.cupc_info()`` reports which library is loaded.
 The neighbor-restricted search has no cap on the conditioning-set size.
