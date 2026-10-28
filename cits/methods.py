@@ -1,6 +1,7 @@
 import numpy as np
 from itertools import chain, combinations
 from scipy import stats, linalg
+from ._common import validate_X
 def data_transform(X,tau):
     """Transforms data X of shape (p,T) to time-windowed samples :math:`\\chi` of shape :math:`(p*2*(\\tau+1),N)`, where :math:`N = \\lfloor \\frac{T-2*(\\tau+1)}{2*(\\tau+1)} \\rfloor`.
 
@@ -256,8 +257,9 @@ def cits_full(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr'):
     :type cond_dep: string
     :returns: Unweighted adjacency matrix of rolled graph
     :rtype: numpy.array
-        (shape is (p,p)) 
+        (shape is (p,p))
     """
+    X = validate_X(X, "cits_full")
     p = X.shape[0]
     A = cits_unrolled(X,tau,alpha, cond_dep)
     B = cits_rolled(A,p,tau)
@@ -312,6 +314,7 @@ def cits_full_weighted(X,tau, alpha=0.05, cond_dep = 'cond_dep_pcorr', thresh = 
     """
 
     import networkx as nx
+    X = validate_X(X, "cits_full_weighted")
     p = X.shape[0]
     A = cits_unrolled(X,tau,alpha, cond_dep)
     # g = nx.from_numpy_array(A, create_using= nx.DiGraph())

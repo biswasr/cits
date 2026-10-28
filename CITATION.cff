@@ -1,0 +1,54 @@
+cff-version: 1.2.0
+message: "If you use CITS in published work, please cite the paper below (preferred-citation)."
+title: "CITS: Causal Inference in Time Series"
+type: software
+version: 1.9.3
+license: PolyForm-Noncommercial-1.0.0
+repository-code: "https://github.com/abbasilab/cits"
+url: "https://github.com/abbasilab/cits"
+authors:
+  - family-names: Biswas
+    given-names: Rahul
+  - family-names: Sripada
+    given-names: SuryaNarayana
+  - family-names: Mukherjee
+    given-names: Somabha
+  - family-names: Abbasi-Asl
+    given-names: Reza
+keywords:
+  - causal inference
+  - time series
+  - functional connectivity
+  - neuroscience
+preferred-citation:
+  type: article
+  title: "CITS: Nonparametric Statistical Causal Modeling for High-Resolution Neural Time Series"
+  authors:
+    - family-names: Biswas
+      given-names: Rahul
+    - family-names: Sripada
+      given-names: SuryaNarayana
+    - family-names: Mukherjee
+      given-names: Somabha
+    - family-names: Abbasi-Asl
+      given-names: Reza
+  year: 2025
+  journal: "arXiv preprint"
+  identifiers:
+    - type: other
+      value: "arXiv:2508.01920"
+  url: "https://arxiv.org/abs/2508.01920"
+references:
+  - type: article
+    title: "cuPC: CUDA-Based Parallel PC Algorithm for Causal Structure Learning on GPU"
+    authors:
+      - family-names: Zarebavani
+        given-names: Behrooz
+      - family-names: Jafarinejad
+        given-names: Foad
+      - family-names: Hashemi
+        given-names: Matin
+      - family-names: Salehkaleybar
+        given-names: Saber
+    year: 2020
+    journal: "IEEE Transactions on Parallel and Distributed Systems"

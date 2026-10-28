@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.so
+Skeleton.so
+
+# build artifacts (never commit: setuptools reuses a stale build/ and installs old code)
+build/
+dist/
+*.egg-info/

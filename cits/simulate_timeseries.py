@@ -25,11 +25,11 @@ def simulate(model, noise, T):
         for t in range(1,T):
             smspikes[0,t]=rng.normal(scale=noise)+1
             smspikes[1,t]=rng.normal(scale=noise)-1
-            smspikes[2,t]=2*np.sum(smspikes[0,np.max((t-lag,0)):t])+1*np.sum(smspikes[1,np.max((t-lag,0)):t])+rng.normal(scale=noise)
+            smspikes[2,t]=2*np.sum(smspikes[0,np.max((t-lag,0)):t])-1*np.sum(smspikes[1,np.max((t-lag,0)):t])+rng.normal(scale=noise)
             smspikes[3,t]=2*np.sum(smspikes[2,np.max((t-lag,0)):t])+rng.normal(scale=noise)
         
         groundtruthadj_weighted[0,2] = 2
-        groundtruthadj_weighted[1,2] = 1
+        groundtruthadj_weighted[1,2] = -1   # X3 = 2 X1 - X2, as in the paper
         groundtruthadj_weighted[2,3] = 2
     
     elif model == 'lingauss2':

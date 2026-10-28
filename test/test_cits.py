@@ -93,3 +93,12 @@ assert np.allclose(eff_un, eff_sh, atol=1e-6), \
     "Shift-invariance broken: weighted effects differ"
 print("v1.4 regression test PASSED")
 
+
+
+def test_cupc_thresholds_cover_all_levels():
+    """cuPC runs conditioning levels 0..ML and reads Th[l] at each level."""
+    from scipy.stats import norm
+    from cits._cupc_wrapper import _cupc_thresholds, _ML
+    th = _cupc_thresholds(200, 0.05)
+    assert len(th) == _ML + 1
+    assert np.isclose(th[_ML], abs(norm.ppf(0.025)) / np.sqrt(200 - _ML - 3))
